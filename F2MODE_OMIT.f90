@@ -159,8 +159,8 @@ do 12 jjj=1,1
             enddo
 
             ! reset position in x:
-            STATEeq(4)=xt0
-            STATEeq(3)=xt0/1000.0
+            STATEeq(6)=xt0
+            STATEeq(5)=xt0/1000.0
             !STATEeq(10)=xt0/1000.0
             write(6,*) 'x,vx,vy,vz'
             write(6,200)STATEeq(6),STATEeq(5),STATEeq(7),STATEeq(9)
@@ -206,8 +206,8 @@ do 12 jjj=1,1
             do 30 it=1,Nperiod
 
                 ! store bead coordinates as a function of time
-                 PX(it)=STATE(3)
-                 XT(it)=STATE(4)
+                 PX(it)=STATE(5)
+                 XT(it)=STATE(6)
                  !YT(it)=STATE(8)
                  !ZT(it)=STATE(10)
 
@@ -780,8 +780,10 @@ Dprobe=DETUN2*time
 
 ALPR1=STATE(1)
 ALPI1=STATE(2)
-Velox=STATE(3)
-XX=STATE(4)
+ALPR2=STATE(3)
+ALPI2=STATE(4)
+Velox=STATE(5)
+XX=STATE(6)
         
 Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
 ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
@@ -805,8 +807,10 @@ DS1=DETUN1+VOPT
 
 DX(1)=0.d0
 DX(2)=0.d0
-DX(3)=-(pi2*40000)**2*XX
-DX(4)=Velox
+DX(3)=0.d0
+DX(4)=0.d0
+DX(5)=-(pi2*40000)**2*XX
+DX(6)=Velox
 
 ! now multiply by *DT
 do 30 ll=1,NTOT
