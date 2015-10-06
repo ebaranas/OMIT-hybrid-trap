@@ -94,9 +94,12 @@ OPEN(18,file="SPECTRA_OMIT.dat",status="unknown")
 write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
 
+det=-50.d3
+DETUN1=det*pi2
+
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=1.33d-3+(jjj-1)*0.01
+    Pin=5d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
 
     !open loop over nwells
@@ -104,12 +107,8 @@ do 12 jjj=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=-9,9
-!           DETUN2=-1.d6+(ii-1)*0.05d6
-!           detun2=46.d3+(ii-1)*0.1d3
-            det=-100.d3+(ii-1)*10.d3
-            DETUN1=DET*pi2
-            detun2=abs(DET)
+        do 10 ii=-12,24
+            DETUN2=50.d3+(ii-1)*2d3
             DETUN2=DETUN2*pi2
             
             ! Zero FT functions
@@ -780,7 +779,7 @@ pi2=2.d0*pi
 TIME=TT+DT*DEL
 
 ! IN THIS VERSION try sin drive to catch fast
-VION=OMTRAPsq*sin(omega*time)
+!VION=OMTRAPsq*sin(omega*time)
 
 Dprobe=DETUN2*time
 
@@ -788,28 +787,28 @@ ALPR1=STATE(1)
 ALPI1=STATE(2)
 Velox=STATE(3)
 XX=STATE(4)
-WKX=WK*XX
-COSWK=COS(WKX)
-cosWK2=COSWK*COSWK
+!WKX=WK*XX
+!COSWK=COS(WKX)
+!cosWK2=COSWK*COSWK
         
-Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
+!Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
 ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
-AWIDE=WIDE*ASQ1
+!AWIDE=WIDE*ASQ1
 
 ! optical shift in detuning.In 3D depends on y,z
 ! VOPT=A*COS(WKX-PHAS1)**2*WIDE
-VOPT=A*coswk2*WIDE
+!VOPT=A*coswk2*WIDE
 
 ! Vfield=Coeff*sin(2.*WKX)*AWIDE
 ! add optical fields without PHAS1 in this model
-Vfield=Coeff*sin(2.*WKX)*AWIDE
-VYZ=-2*coeff/WK*coswk2*AWIDE*W2M
+!Vfield=Coeff*sin(2.*WKX)*AWIDE
+!VYZ=-2*coeff/WK*coswk2*AWIDE*W2M
 
 ! both fields have same detuning
 DS1=DETUN1
-coupling=1.d10
+coupling=1.d5
 coupling=hbar/(0.73655687D-16)*coupling
-omegam=40000
+omegam=50000
 omegam=omegam*pi2
 
 ! write(6,*)DETUN1,VOPT
