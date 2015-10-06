@@ -96,7 +96,7 @@ write(6,100) Q/1.6*1d19,V0
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=0.5d-3+(jjj-1)*0.01
+    Pin=1.7d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
 
     !open loop over nwells
@@ -107,7 +107,7 @@ do 12 jjj=1,1
         do 10 ii=1,1
 !           DETUN2=-1.d6+(ii-1)*0.05d6
 !           detun2=46.d3+(ii-1)*0.1d3
-            det=-60.d3-(ii-1)*10.d3
+            det=-100.d3-(ii-1)*10.d3
             DETUN1=DET*pi2
             detun2=abs(DET)
             DETUN2=DETUN2*pi2
@@ -223,11 +223,11 @@ do 12 jjj=1,1
                 ! transmitted light   
                 AOUTr=-(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)*10
                 AOUTi=-(E2*cos(DETUN2*Tin))/sqrt(2*kapp2)*10
-                !AOUTi=AOUTi+sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
-                !AOUTr=AOUTr+sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
-                AOUTi=sqrt(2.*KAPP2)*(STATE(2))
-                AOUTr=sqrt(2.*KAPP2)*(STATE(1))
-                ASQ=(AOUTr**2+ AOUTi**2)
+                AOUTi=AOUTi+sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
+                AOUTr=AOUTr+sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
+                !AOUTi=sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
+                !AOUTr=sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
+                ASQ=sqrt(AOUTr**2+ AOUTi**2)
 
                 ! Fill parameters for the FT:trap
                 SR3(it)=Aoutr
@@ -271,67 +271,73 @@ do 12 jjj=1,1
             ! close time loop
             30      enddo
 
-        ! Work out Fourier transforms
-        ! Calculate spectrum of  output square term 
-        ! by a discrete Fourier transform
-        call sfft(SR1,SI1,NPM,NPM,NPM,1,ierr)
-        F0=2.*pi/(TDEL*(nperiod-1))
-        
-        ! if need be sum over stochastic realisations
-        do kk=1,NPM
-            Spec1(kk)=sqrt(SR1(kk)**2+SI1(kk)**2)
-        enddo
+            ! Work out Fourier transforms
+            ! Calculate spectrum of  output square term 
+            ! by a discrete Fourier transform
+            call sfft(SR1,SI1,NPM,NPM,NPM,1,ierr)
+            F0=2.*pi/(TDEL*(nperiod-1))
+            
+            ! if need be sum over stochastic realisations
+            do kk=1,NPM
+                Spec1(kk)=sqrt(SR1(kk)**2+SI1(kk)**2)
+            enddo
 
-        ! Calculate spectrum of position by a discrete Fourier transform
-        F0=2.*pi/(TDEL*(nperiod-1))
-        call sfft(SR2,SI2,NPM,NPM,NPM,1,ierr)
- 
-        ! if need be sum over stochastic realisations
-        do kk=1,NPM
-            Spec2(kk)=sqrt(SR2(kk)**2+SI2(kk)**2)
-        enddo
+            ! Calculate spectrum of position by a discrete Fourier transform
+            F0=2.*pi/(TDEL*(nperiod-1))
+            call sfft(SR2,SI2,NPM,NPM,NPM,1,ierr)
+     
+            ! if need be sum over stochastic realisations
+            do kk=1,NPM
+                Spec2(kk)=sqrt(SR2(kk)**2+SI2(kk)**2)
+            enddo
 
-        ! Calculate spectrum of complex FT output field
-        call sfft(SR3,SI3,NPM,NPM,NPM,1,ierr)
+            ! Calculate spectrum of complex FT output field
+            call sfft(SR3,SI3,NPM,NPM,NPM,1,ierr)
 
-        ! if need be sum over stochastic realisations
-        do kk=1,NPM
-            Spec3(kk)=sqrt(SR3(kk)**2+SI3(kk)**2)
-        enddo
-        ! if need be end loop over stochastic realisations here
-        ! enddo
+            ! if need be sum over stochastic realisations
+            do kk=1,NPM
+                Spec3(kk)=sqrt(SR3(kk)**2+SI3(kk)**2)
+            enddo
+            ! if need be end loop over stochastic realisations here
+            ! enddo
 
-        ! Re-order Ft's from 1-N to -N/2, N/2
-        mid=NPM/2
-        do kk=1,NPM
-            if(kk.le.mid)then
-                in=kk-1
-                else
-                in=-(NPM+1-kk)
-            endif 
-            SR1(in+mid+1)=pi2*SPEC1(kk)
-            SR2(in+mid+1)=pi2*SPEC2(kk)
-            SR3(in+mid+1)=pi2*SPEC3(kk)
-        enddo
+            ! Re-order Ft's from 1-N to -N/2, N/2
+            mid=NPM/2
+            do kk=1,NPM
+                if(kk.le.mid)then
+                    in=kk-1
+                    else
+                    in=-(NPM+1-kk)
+                endif 
+                SR1(in+mid+1)=pi2*SPEC1(kk)
+                SR2(in+mid+1)=pi2*SPEC2(kk)
+                SR3(in+mid+1)=pi2*SPEC3(kk)
+            enddo
 
-        ! remove  spike at freq=0!!
-        SR3(mid)=0.5*(SR3(mid-2)+SR3(mid+2))
-        SR2(mid)=0.5*(SR2(mid-2)+SR2(mid+2))
-        SR1(mid)=0.5*(SR1(mid-2)+SR1(mid+2))
-        SR3(mid+1)=SR3(mid)
-        SR2(mid+1)= SR2(mid)
-        SR1(mid+1)= SR1(mid)
+            ! remove  spike at freq=0!!
+            SR3(mid)=0.5*(SR3(mid-2)+SR3(mid+2))
+            SR2(mid)=0.5*(SR2(mid-2)+SR2(mid+2))
+            SR1(mid)=0.5*(SR1(mid-2)+SR1(mid+2))
+            SR3(mid+1)=SR3(mid)
+            SR2(mid+1)= SR2(mid)
+            SR1(mid+1)= SR1(mid)
 
-        do in=1,NPM
-            jj=in-mid-1
-            freq= jj*F0/pi2
-            ! if((freq.gt.0d0).and.(freq.lt.2e5))then
-            ! damp the spike at 1e5
-            if(abs(freq-1.e5).lt.200.) SR1(in)= SR1(in)/1e13
-            write(18,200) freq,(SR1(in)),(SR2(in)),(SR3(in))
-            ! endif
-            omstor(in)=freq
-        enddo
+            do in=1,NPM
+                jj=in-mid-1
+                freq= jj*F0/pi2
+                ! if((freq.gt.0d0).and.(freq.lt.2e5))then
+                ! damp the spike at 1e5
+                if(abs(freq-1.e5).lt.200.) SR1(in)= SR1(in)/1e13
+                write(18,200) freq,(SR1(in)),(SR2(in)),(SR3(in))
+                ! endif
+                omstor(in)=freq
+            enddo
+           
+            ! estimate the transmission based on integrated FT of the probe
+            ! use the complex FT
+            call NORM(NPM,TOTAL,SR3,OMSTOR)
+            write(6,*)'detun2,total', Detun2/2/pi,Total
+            write(16,200) Detun2/2/pi,Total
 
         10 enddo
     11 enddo
@@ -784,6 +790,9 @@ ALPR2=STATE(3)
 ALPI2=STATE(4)
 Velox=STATE(5)
 XX=STATE(6)
+WKX=WK*XX
+COSWK=COS(WKX)
+cosWK2=COSWK*COSWK
         
 Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
 ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
@@ -805,11 +814,12 @@ DS1=DETUN1+VOPT
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=0.d0
-DX(2)=0.d0
-DX(3)=0.d0
-DX(4)=0.d0
-DX(5)=-(pi2*40000)**2*XX
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1
+DX(3)=-DS1*ALPI2-KAPP2*ALPR2-E2*sin(Dprobe)
+DX(4)=DS1*ALPR2-KAPP2*ALPI2-E2*cos(Dprobe)
+!DX(5)=-Vfield-GammaM*Velox-VION*XX
+DX(5)=-(pi2*20000)**2*XX-1.d0*(STATE(1)+STATE(3))*(STATE(2)+STATE(4))
 DX(6)=Velox
 
 ! now multiply by *DT
@@ -1526,7 +1536,7 @@ DEL=ABS(OMSTOR(2)-OMSTOR(1))
 
 do ii=1,NPTS-1
     if((OMstor(ii).gt.F1).and.(OMstor(ii).lt.F2))then 
-        XRE=XRE+0.5d0*( SXXR(ii)+SXXR(ii+1))
+        XRE=XRE+0.5d0*(SXXR(ii)+SXXR(ii+1))
     endif
 enddo
 
