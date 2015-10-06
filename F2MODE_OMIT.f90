@@ -96,7 +96,7 @@ write(6,100) Q/1.6*1d19,V0
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=1.7d-3+(jjj-1)*0.01
+    Pin=1.33d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
 
     !open loop over nwells
@@ -104,10 +104,10 @@ do 12 jjj=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=1,1
+        do 10 ii=-9,9
 !           DETUN2=-1.d6+(ii-1)*0.05d6
 !           detun2=46.d3+(ii-1)*0.1d3
-            det=-100.d3-(ii-1)*10.d3
+            det=-100.d3+(ii-1)*10.d3
             DETUN1=DET*pi2
             detun2=abs(DET)
             DETUN2=DETUN2*pi2
@@ -142,7 +142,7 @@ do 12 jjj=1,1
             
             !INITIALISE POSITIONS AND MOMENTA
             write(6,*)' Energy in secular motion'
-            XT0=(NWELLS+0.2)/WK*pi
+            XT0=(NWELLS)/WK*pi
             Qx=2*OMTRAPsq/omega/omega
             omsec=OMTRAPsq/sqrt(2.d0)/omega
             Energy=XM*omsec**2*XT0**2
@@ -159,8 +159,8 @@ do 12 jjj=1,1
             enddo
 
             ! reset position in x:
-            STATEeq(6)=xt0
-            STATEeq(5)=xt0/1000.0
+            STATEeq(4)=xt0
+            STATEeq(3)=xt0/1000.0
             !STATEeq(10)=xt0/1000.0
             write(6,*) 'x,vx,vy,vz'
             write(6,200)STATEeq(6),STATEeq(5),STATEeq(7),STATEeq(9)
@@ -206,8 +206,8 @@ do 12 jjj=1,1
             do 30 it=1,Nperiod
 
                 ! store bead coordinates as a function of time
-                 PX(it)=STATE(5)
-                 XT(it)=STATE(6)
+                 PX(it)=STATE(3)
+                 XT(it)=STATE(4)
                  !YT(it)=STATE(8)
                  !ZT(it)=STATE(10)
 
@@ -716,7 +716,7 @@ do 10 it=1,nstep
     ! add noise to trap optical field
     ! add noise to x and px
     STATEout(1)=STATEout(1)+etaim*SNR
-    STATEout(5)=STATEout(5)+etare*xnoise
+    STATEout(3)=STATEout(3)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
@@ -741,7 +741,7 @@ SUBROUTINE FUNC(DT,STATE,XKR,TT,DEL,DETUN1,DETUN2,Coeff,OMTRAPsq,GAMMAM,kapp2,E1
 !********************************************************************
 IMPLICIT NONE
 integer  ::ll,kk,it,jj,Nstep,NTOT,NPERIOD
-double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
+double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,coupling,omegam,mass
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
@@ -786,10 +786,8 @@ Dprobe=DETUN2*time
 
 ALPR1=STATE(1)
 ALPI1=STATE(2)
-ALPR2=STATE(3)
-ALPI2=STATE(4)
-Velox=STATE(5)
-XX=STATE(6)
+Velox=STATE(3)
+XX=STATE(4)
 WKX=WK*XX
 COSWK=COS(WKX)
 cosWK2=COSWK*COSWK
@@ -808,19 +806,20 @@ Vfield=Coeff*sin(2.*WKX)*AWIDE
 VYZ=-2*coeff/WK*coswk2*AWIDE*W2M
 
 ! both fields have same detuning
-DS1=DETUN1+VOPT
+DS1=DETUN1
+coupling=1.d10
+coupling=hbar/(0.73655687D-16)*coupling
+omegam=40000
+omegam=omegam*pi2
 
 ! write(6,*)DETUN1,VOPT
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1
-DX(2)=DS1*ALPR1-KAPP2*ALPI1
-DX(3)=-DS1*ALPI2-KAPP2*ALPR2-E2*sin(Dprobe)
-DX(4)=DS1*ALPR2-KAPP2*ALPI2-E2*cos(Dprobe)
-!DX(5)=-Vfield-GammaM*Velox-VION*XX
-DX(5)=-(pi2*20000)**2*XX-1.d0*(STATE(1)+STATE(3))*(STATE(2)+STATE(4))
-DX(6)=Velox
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*sin(Dprobe)+coupling*XX*ALPI1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1-E2*cos(Dprobe)-coupling*XX*ALPR1
+DX(3)=-omegam**2*XX-coupling*ASQ1-GAMMAM*Velox
+DX(4)=Velox
 
 ! now multiply by *DT
 do 30 ll=1,NTOT
