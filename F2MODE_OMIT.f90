@@ -85,21 +85,21 @@ nbreak=10
 ! subdivide further into nrkutta steps for propagation
 nrkutta=1000
  
-OPEN(8,file="NUMGAMMA_OMIT.dat",status="unknown")
-OPEN(12,file="TRAJECTORY_OMIT.dat",status="unknown")
-OPEN(14,file="TRAJECTORXYZ_OMIT.dat",status="unknown")
-OPEN(16,file="TRANSMISSION_OMIT.dat",status="unknown")
-OPEN(18,file="SPECTRA_OMIT.dat",status="unknown")
+OPEN(8,file="NUMGAMMA_OMIT2.dat",status="unknown")
+OPEN(12,file="TRAJECTORY_OMIT2.dat",status="unknown")
+OPEN(14,file="TRAJECTORXYZ_OMIT2.dat",status="unknown")
+OPEN(16,file="TRANSMISSION_OMIT2.dat",status="unknown")
+OPEN(18,file="SPECTRA_OMIT2.dat",status="unknown")
      
 write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
 
-det=-50.d3
+det=50.d3
 DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=5d-3+(jjj-1)*0.01
+    Pin=1.d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
 
     !open loop over nwells
@@ -107,8 +107,8 @@ do 12 jjj=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=-12,24
-            DETUN2=50.d3+(ii-1)*2d3
+        do 10 ii=-30,30
+            DETUN2=-50.d3+(ii-1)*.1d3
             DETUN2=DETUN2*pi2
             
             ! Zero FT functions
@@ -806,8 +806,7 @@ ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
 
 ! both fields have same detuning
 DS1=DETUN1
-coupling=1.d5
-coupling=hbar/(0.73655687D-16)*coupling
+coupling=4.d10
 omegam=50000
 omegam=omegam*pi2
 
@@ -817,7 +816,7 @@ omegam=omegam*pi2
 
 DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*sin(Dprobe)+coupling*XX*ALPI1
 DX(2)=DS1*ALPR1-KAPP2*ALPI1-E2*cos(Dprobe)-coupling*XX*ALPR1
-DX(3)=-omegam**2*XX-coupling*ASQ1-GAMMAM*Velox
+DX(3)=-omegam**2*XX-hbar/(0.73655687D-16)*coupling*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
 ! now multiply by *DT
