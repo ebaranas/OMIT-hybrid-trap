@@ -1,4 +1,4 @@
-! This code has a weak probe beam. Beam 2
+! MODEIFIVADNV;LAWJFEPOThis code has a weak probe beam. Beam 2
 !*****************************************************************
 ! Code for solving 3D bead dynamics in the presence of an ion trap
 ! UNSCALED variables throughout.
