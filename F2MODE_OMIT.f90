@@ -85,11 +85,11 @@ nbreak=10
 ! subdivide further into nrkutta steps for propagation
 nrkutta=1000
  
-OPEN(8,file="NUMGAMMA_OMIT2.dat",status="unknown")
-OPEN(12,file="TRAJECTORY_OMIT2.dat",status="unknown")
-OPEN(14,file="TRAJECTORXYZ_OMIT2.dat",status="unknown")
-OPEN(16,file="TRANSMISSION_OMIT2.dat",status="unknown")
-OPEN(18,file="SPECTRA_OMIT2.dat",status="unknown")
+OPEN(8,file="NUMGAMMA_OMIT.dat",status="unknown")
+OPEN(12,file="TRAJECTORY_OMIT.dat",status="unknown")
+OPEN(14,file="TRAJECTORXYZ_OMIT.dat",status="unknown")
+OPEN(16,file="TRANSMISSION_OMIT.dat",status="unknown")
+OPEN(18,file="SPECTRA_OMIT.dat",status="unknown")
      
 write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
@@ -99,7 +99,7 @@ DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=1.d-3+(jjj-1)*0.01
+    Pin=2.d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
 
     !open loop over nwells
@@ -107,7 +107,7 @@ do 12 jjj=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=-30,30
+        do 10 ii=-5,5
             DETUN2=-50.d3+(ii-1)*.1d3
             DETUN2=DETUN2*pi2
             
@@ -220,12 +220,10 @@ do 12 jjj=1,1
                 !endif
 
                 ! transmitted light   
-                AOUTr=-(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)*10
-                AOUTi=-(E2*cos(DETUN2*Tin))/sqrt(2*kapp2)*10
-                AOUTi=AOUTi+sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
-                AOUTr=AOUTr+sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
-                !AOUTi=sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
-                !AOUTr=sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
+                AOUTr=(-E1-E2*cos(DETUN2*Tin))/sqrt(2*kapp2)
+                AOUTi=(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)
+                AOUTi=AOUTi-sqrt(2.*KAPP2)*STATE(2)
+                AOUTr=AOUTr-sqrt(2.*KAPP2)*STATE(1)
                 ASQ=sqrt(AOUTr**2+ AOUTi**2)
 
                 ! Fill parameters for the FT:trap
@@ -334,7 +332,7 @@ do 12 jjj=1,1
            
             ! estimate the transmission based on integrated FT of the probe
             ! use the complex FT
-            call NORM(NPM,TOTAL,SR3,OMSTOR)
+            call NORM(NPM,TOTAL,SR1,OMSTOR)
             write(6,*)'detun2,total', Detun2/2/pi,Total
             write(16,200) Detun2/2/pi,Total
 
@@ -806,7 +804,7 @@ ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
 
 ! both fields have same detuning
 DS1=DETUN1
-coupling=4.d10
+coupling=-4.d10
 omegam=50000
 omegam=omegam*pi2
 
@@ -814,8 +812,8 @@ omegam=omegam*pi2
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*sin(Dprobe)+coupling*XX*ALPI1
-DX(2)=DS1*ALPR1-KAPP2*ALPI1-E2*cos(Dprobe)-coupling*XX*ALPR1
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+coupling*XX*ALPI1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-coupling*XX*ALPR1
 DX(3)=-omegam**2*XX-hbar/(0.73655687D-16)*coupling*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
