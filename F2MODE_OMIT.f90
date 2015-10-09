@@ -1,4 +1,4 @@
-! MODEIFIVADNV;LAWJFEPOThis code has a weak probe beam. Beam 2
+! This code has a weak probe beam. Beam 2
 !*****************************************************************
 ! Code for solving 3D bead dynamics in the presence of an ion trap
 ! UNSCALED variables throughout.
@@ -85,11 +85,11 @@ nbreak=10
 ! subdivide further into nrkutta steps for propagation
 nrkutta=1000
  
-OPEN(8,file="NUMGAMMA_OMIT.dat",status="unknown")
-OPEN(12,file="TRAJECTORY_OMIT.dat",status="unknown")
-OPEN(14,file="TRAJECTORXYZ_OMIT.dat",status="unknown")
-OPEN(16,file="TRANSMISSION_OMIT.dat",status="unknown")
-OPEN(18,file="SPECTRA_OMIT.dat",status="unknown")
+OPEN(8,file="NUMGAMMA_OMIT2.dat",status="unknown")
+OPEN(12,file="TRAJECTORY_OMIT2.dat",status="unknown")
+OPEN(14,file="TRAJECTORXYZ_OMIT2.dat",status="unknown")
+OPEN(16,file="TRANSMISSION_OMIT2.dat",status="unknown")
+OPEN(18,file="SPECTRA_OMIT2.dat",status="unknown")
      
 write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
@@ -99,15 +99,15 @@ DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=2.d-3+(jjj-1)*0.01
+    Pin=1.d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
-    
+
     !open loop over nwells
     do 11 iii=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=-3,5
+        do 10 ii=-30,30
             DETUN2=-50.d3+(ii-1)*.1d3
             DETUN2=DETUN2*pi2
             
@@ -205,8 +205,8 @@ do 12 jjj=1,1
             do 30 it=1,Nperiod
 
                 ! store bead coordinates as a function of time
-                 PX(it)=STATE(5)
-                 XT(it)=STATE(6)
+                 PX(it)=STATE(3)
+                 XT(it)=STATE(4)
                  !YT(it)=STATE(8)
                  !ZT(it)=STATE(10)
 
@@ -219,22 +219,14 @@ do 12 jjj=1,1
                 !    STATE(5)=0.d0
                 !endif
 
-                ! transmitted light
-                !AOUTr=-(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)*10
-                !AOUTi=-(E2*cos(DETUN2*Tin))/sqrt(2*kapp2)*10
-                !AOUTi=AOUTi-sqrt(2.*KAPP2)*(STATE(2))
-                !AOUTr=AOUTr-sqrt(2.*KAPP2)*(STATE(1))
+                ! transmitted light   
+                AOUTr=-(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)*10
+                AOUTi=-(E2*cos(DETUN2*Tin))/sqrt(2*kapp2)*10
+                AOUTi=AOUTi+sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
+                AOUTr=AOUTr+sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
                 !AOUTi=sqrt(2.*KAPP2)*(STATE(2)+STATE(4))
                 !AOUTr=sqrt(2.*KAPP2)*(STATE(1)+STATE(3))
-
-                ! transmitted light OF PROBE
-                AOUTr=-E2*cos(DETUN2*Tin)-sqrt(2.*KAPP2)*STATE(3)
-                AOUTi=E2*sin(DETUN2*Tin)-sqrt(2.*KAPP2)*STATE(4)
-                
-                ! transmitted light of trap
-                ASQ=-E1-sqrt(2.*KAPP2)*STATE(1)
-
-                !ASQ=sqrt(AOUTr**2+ AOUTi**2)
+                ASQ=sqrt(AOUTr**2+ AOUTi**2)
 
                 ! Fill parameters for the FT:trap
                 SR3(it)=Aoutr
@@ -723,7 +715,7 @@ do 10 it=1,nstep
     ! add noise to trap optical field
     ! add noise to x and px
     STATEout(1)=STATEout(1)+etaim*SNR
-    STATEout(5)=STATEout(5)+etare*xnoise
+    STATEout(3)=STATEout(3)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
@@ -793,16 +785,14 @@ Dprobe=DETUN2*time
 
 ALPR1=STATE(1)
 ALPI1=STATE(2)
-ALPR2=STATE(3)
-ALPI2=STATE(4)
-Velox=STATE(5)
-XX=STATE(6)
+Velox=STATE(3)
+XX=STATE(4)
 !WKX=WK*XX
 !COSWK=COS(WKX)
 !cosWK2=COSWK*COSWK
         
 !Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
-ASQ1=ALPR1*ALPR1+ALPI1*ALPI1+ALPR2*ALPR2+ALPI2*ALPI2
+ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
 !AWIDE=WIDE*ASQ1
 
 ! optical shift in detuning.In 3D depends on y,z
@@ -815,9 +805,7 @@ ASQ1=ALPR1*ALPR1+ALPI1*ALPI1+ALPR2*ALPR2+ALPI2*ALPI2
 !VYZ=-2*coeff/WK*coswk2*AWIDE*W2M
 
 ! both fields have same detuning
-
 DS1=DETUN1
-DS2=DETUN2
 coupling=4.d10
 omegam=50000
 omegam=omegam*pi2
@@ -826,12 +814,10 @@ omegam=omegam*pi2
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1+coupling*XX*ALPI1
-DX(2)=DS1*ALPR1-KAPP2*ALPI1-coupling*XX*ALPR1
-DX(3)=-DS1*ALPI2-KAPP2*ALPR2-E2*cos(Dprobe)+coupling*XX*ALPI2
-DX(4)=DS1*ALPR2-KAPP2*ALPI2+E2*sin(Dprobe)-coupling*XX*ALPR2
-DX(5)=-omegam**2*XX-hbar/(0.73655687D-16)*coupling*ASQ1-GAMMAM*Velox
-DX(6)=Velox
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*sin(Dprobe)+coupling*XX*ALPI1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1-E2*cos(Dprobe)-coupling*XX*ALPR1
+DX(3)=-omegam**2*XX-hbar/(0.73655687D-16)*coupling*ASQ1-GAMMAM*Velox
+DX(4)=Velox
 
 ! now multiply by *DT
 do 30 ll=1,NTOT
