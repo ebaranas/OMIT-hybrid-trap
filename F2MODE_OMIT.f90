@@ -40,10 +40,10 @@ double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,QX,QY,QZ,Q
 double precision::RTRAP,V0,trapfreq,omega,Om,omsec,energy
 
-! omega=trap drive; omegam=mech freq.
+! omega=trap drive; =mech freq.
 ! calculated input parameters
 double precision:: E1,E2,PHAS1,tem1,AOUTr,AOUTi,Ar,Ai
-double precision:: KAPP2,XM,A,OMEGAM,AMP,Vamp,XV
+double precision:: KAPP2,XM,A,AMP,Vamp,XV,omegam,G
 double precision:: x0,Wk0,check,GAMMAM,OMTRAPsq,VOPT,W2
 double precision:: XT0,YT0,ZT0,XX,YY,ZZ,XP0,YP0,ZP0,Avcos,Scatter,RR,pointpcle
 
@@ -137,7 +137,7 @@ do 12 jjj=1,1
             ! assume we start NWELLS  out from ion trap centre and accelerate back
             ! NWELLS=9
             ! NWELLS=-320
-            CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0, OMEGAM,omega,AMP,Vamp,Pin,Pin2)
+            CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
             
             !INITIALISE POSITIONS AND MOMENTA
             write(6,*)' Energy in secular motion'
@@ -163,7 +163,7 @@ do 12 jjj=1,1
             !STATEeq(10)=xt0/1000.0
             write(6,*) 'x,vx,vy,vz'
             write(6,200)STATEeq(6),STATEeq(5),STATEeq(7),STATEeq(9)
-            write(6,*) 'trap beam detuning, kappa/2 and omegam='
+            write(6,*) 'trap beam detuning, kappa/2 and ='
             write(6,200) detun1,kapp2,omegam
 
             ! period of each oscillation at equilibrium
@@ -202,6 +202,7 @@ do 12 jjj=1,1
             ! reset the position so as to add one quarter of the well half width
             ! State(6)=State(6)-5.32d-7/4
             Tin=0.d0
+
             do 30 it=1,Nperiod
 
                 ! store bead coordinates as a function of time
@@ -405,7 +406,7 @@ end
 
 !********************************************************************
 !********************************************************************
-SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0, OMEGAM,omega,AMP,Vamp,Pin,Pin2)
+SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
 ! subroutine below is provided by user and specifies initial state
 ! and calculates  relevant parameters 
 !********************************************************************
@@ -416,7 +417,7 @@ integer  ::ii,m,jj,NTOT,NPERIOD,NWELLS
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
-double precision::RTRAP,V0,trapfreq,omega,DET
+double precision::RTRAP,V0,trapfreq,omega,DET,g0,cooperativity,xZPF,omegam,omegamm,G
 
 include 'PROBE2_OMIT.h'
 
@@ -424,13 +425,14 @@ double precision:: DETUN1,DETUN2,E1,E2,PHAS1,W2,W2M,welln
 double precision:: KAPP,ENERGY,A,XM,KAPP2
 double precision::pi,pi2
 double precision::Polaris,VOL,OMOPT,OMTRAPsq,QMICRO,AMP,Vamp,Astab
-double precision:: X0,WK0,OMEGAM,Gammam,omsec,omsecf,omegay,Beta
+double precision:: X0,WK0,Gammam,omsec,omsecf,omegay,Beta
 double precision::C1,C2,C3,C4,COOL1,ASQ1,ASQ2,XWELL,XEQ,WKXEQ     
 DOUBLE precision, DIMENSION(NTOT):: STATEeq
    
 ! zero eq. initial values
 STATEeq=0.d0
 PI=dacos(-1.d0)
+pi2=pi*2.d0
 XM=RHO*4.*pi/3.*R0**3
 write(6,*)'Mass='
 write(6,100) XM
@@ -470,7 +472,11 @@ write(6,*)'mechanical damping* 2pi'
 write(6,100)GAMMAM
 
 OMTRAPsq=2.*Q*V0/XM/RTRAP**2
-omega=trapfreq*2*pi
+write(6,*)'omega'
+write(6,*)'trapfreq'
+write(6,100) trapfreq
+omega=trapfreq
+write(6,*)trapfreq
 QMICRO=OMtrapsq/omega**2
 write(6,*)'micromotion q/2='
 write(6,100) QMICRO
@@ -487,8 +493,8 @@ WK0=0.d0
 ! We calculate equilibrium photon fields and x_0
 ! real part of photon field for trap
 ! this version uses 2*PHAS=pi/2 for equilibria
-C1=KAPP2**2+(DETUN1+A*cos(WK0-phas1)**2)**2
-STATEeq(1)=E1*(DETUN1+A*cos(WK0-phas1)**2)/C1
+C1=KAPP2**2+(DETUN1+0*A*cos(WK0-phas1)**2)**2
+STATEeq(1)=E1*(DETUN1+0*A*cos(WK0-phas1)**2)/C1
 
 ! Imaginary part of photon field 1
 STATEeq(2)=-E1*KAPP2/C1
@@ -537,9 +543,8 @@ write(6,*)'transverse optical frequency:'
 write(6,*) omegay
 
 ! equilibrium oscillation frequency
-OMEGAM=2.*WK**2*A*hbar/XM
-OMEGAM=OMEGAM*ASQ1*cos(2.*WK0)
-OMEGAM=sqrt(OMEGAM)
+!OMEGAM=OMEGAM*ASQ1*cos(2.*WK0)
+!OMEGAM=sqrt(OMEGAM)
 write(6,*)'Mechanical frequency f in Hz'
 write(6,100) omegam/2/pi
 write(6,*)'Mechanical frequency omega M,detuning, kappa2'
@@ -586,6 +591,14 @@ C3=OMTRAPsq/OMEGAM**2
 C2=pi**2*A/Kapp2*welln**2
 C2=C2*C3**2*OMEGAM
 
+omegamm=omegam*pi2
+xZPF=sqrt(hbar/(2.*XM*omegamm))
+g0=G*xZPF
+cooperativity=g0*g0/(2*kapp2*gammam)
+
+write(6,*) 'cooperativity'
+write(6,100) cooperativity
+
 100 format(4D16.8)
 
 RETURN
@@ -600,7 +613,7 @@ SUBROUTINE RK(nstep,STATE,STATEout,TDEL,TIME,DETUN1,DETUN2,XM,OMTRAPsq,W2,GAMMAM
 !********************************************************************
 IMPLICIT NONE 
 integer  ::ll,kk,it,jj,nstep,NTOT,NPERIOD,idum
-double precision:: cnoise,XNAV
+double precision:: cnoise,XNAV,omegam,G
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
@@ -668,7 +681,7 @@ do 10 it=1,nstep
     DEL=0.d0
     ! XK1=F(tt,STATE(tt))*Dt
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 11 ll=1,Ntot
@@ -679,7 +692,7 @@ do 10 it=1,nstep
     ! Xk2= F(tt+Dt/2,STATE(tt)+xk1/2)*Dt
     DEL=0.5d0
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 12 ll=1,Ntot
@@ -690,7 +703,7 @@ do 10 it=1,nstep
     ! XK3=F(tt+Dt/2), STATE(tt) +xk2/2)*Dt
     DEL=0.5d0
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 13 ll=1,Ntot
@@ -701,7 +714,7 @@ do 10 it=1,nstep
     ! XK4=F(tt+Dt, STATE(tt)+xk3)*Dt
     DEL=1.d0
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 14 ll=1,Ntot
@@ -731,14 +744,14 @@ END
 
 !********************************************************************
 !********************************************************************
-SUBROUTINE FUNC(DT,STATE,XKR,TT,DEL,DETUN1,DETUN2,Coeff,OMTRAPsq,GAMMAM,kapp2,E1,E2,A,W2M,omega,GRAVITY,OFFSET)
+SUBROUTINE FUNC(DT,STATE,XKR,TT,DEL,DETUN1,DETUN2,Coeff,OMTRAPsq,GAMMAM,kapp2,E1,E2,A,W2M,omega,GRAVITY,OFFSET,XM)
 ! works out the derivatives d\alpha/dt, d\alpha*/dt , d^2x/dt^2,dx/dt,
 ! also multiplies by DT
 !********************************************************************
 !********************************************************************
 IMPLICIT NONE
 integer  ::ll,kk,it,jj,Nstep,NTOT,NPERIOD
-double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,coupling,omegam,mass
+double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,coupling,omegam,omegamm,G
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
@@ -804,17 +817,15 @@ ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
 
 ! both fields have same detuning
 DS1=DETUN1
-coupling=1d11
-omegam=50000
-omegam=omegam*pi2
+omegamm=omegam*pi2
 
 ! write(6,*)DETUN1,VOPT
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+coupling*XX*ALPI1
-DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-coupling*XX*ALPR1
-DX(3)=-omegam**2*XX-hbar/(0.73655687D-16)*coupling*ASQ1-GAMMAM*Velox
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+G*XX*ALPI1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-G*XX*ALPR1
+DX(3)=-omegamm**2*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
 ! now multiply by *DT
@@ -1506,7 +1517,7 @@ SUBROUTINE NORM(NPTS,Total,SXXR,OMSTOR)
                 
 IMPLICIT NONE 
 integer  ::ii,jj,NTOT,NPERIOD,NPTS
-double precision::pi,pi2,DEL,XRE,XIM,OM,Total,F1,F2
+double precision::pi,pi2,DEL,XRE,XIM,OM,Total,F1,F2,omegam,G
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,DET,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
@@ -1553,7 +1564,7 @@ end
 !********************************************************************
 IMPLICIT NONE 
 integer  ::ll,kk,it,jj,nstep,NTOT,NPERIOD,idum
-double precision:: cnoise,XNAV
+double precision:: cnoise,XNAV,omegam,G
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
@@ -1606,7 +1617,7 @@ do 10 it=1,nstep
     DEL=0.d0
     ! XK1=F(tt,STATE(tt))*Dt
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 11 ll=1,Ntot
@@ -1617,7 +1628,7 @@ do 10 it=1,nstep
     ! Xk2= F(tt+Dt/2,STATE(tt)+xk1/2)*Dt
     DEL=0.5d0
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 12 ll=1,Ntot
@@ -1628,7 +1639,7 @@ do 10 it=1,nstep
     ! XK3=F(tt+Dt/2), STATE(tt) +xk2/2)*Dt
     DEL=0.5d0
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 13 ll=1,Ntot
@@ -1639,7 +1650,7 @@ do 10 it=1,nstep
     ! XK4=F(tt+Dt, STATE(tt)+xk3)*Dt
     DEL=1.d0
     CALL FUNC(DT,STATE,XKR,TT,DEL,DETUN1,Detun2,Coeff,OMTRAPsq,GAM,kapp2,E1,E2,A,W2M,&
-    omega,GRAVITY,offset,Pin,Pin2)
+    omega,GRAVITY,offset,Pin,Pin2,XM)
 
     ! update Stateout with runge Kutta increment
     do 14 ll=1,Ntot
