@@ -94,12 +94,12 @@ OPEN(18,file="SPECTRA_OMIT.dat",status="unknown")
 write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
 
-det=50.d3
+det=-50.d3
 DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=2.d-3+(jjj-1)*0.01
+    Pin=0.8d-3+(jjj-1)*0.01
     PIN2=0.01*Pin
 
     !open loop over nwells
@@ -108,7 +108,7 @@ do 12 jjj=1,1
 
         ! open loop over detuning
         do 10 ii=-5,5
-            DETUN2=-50.d3+(ii-1)*.1d3
+            DETUN2=50.d3+(ii-1)*.1d3
             DETUN2=DETUN2*pi2
             
             ! Zero FT functions
@@ -220,10 +220,10 @@ do 12 jjj=1,1
                 !endif
 
                 ! transmitted light   
-                AOUTr=(-E1-E2*cos(DETUN2*Tin))/sqrt(2*kapp2)
-                AOUTi=(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)
-                AOUTi=AOUTi-sqrt(2.*KAPP2)*STATE(2)
-                AOUTr=AOUTr-sqrt(2.*KAPP2)*STATE(1)
+                !AOUTr=(-E1-E2*cos(DETUN2*Tin))/sqrt(2*kapp2)
+                !AOUTi=(E2*sin(DETUN2*Tin))/sqrt(2*kapp2)
+                AOUTi=STATE(2)
+                AOUTr=STATE(1)
                 ASQ=sqrt(AOUTr**2+ AOUTi**2)
 
                 ! Fill parameters for the FT:trap
@@ -804,7 +804,7 @@ ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
 
 ! both fields have same detuning
 DS1=DETUN1
-coupling=-4.d10
+coupling=1d11
 omegam=50000
 omegam=omegam*pi2
 
