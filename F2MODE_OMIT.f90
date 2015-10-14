@@ -99,7 +99,7 @@ DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=2d-3+(jjj-1)*0.01
+    Pin=20d-3+(jjj-1)*0.01
     PIN2=0.0*Pin
 
     !open loop over nwells
@@ -163,8 +163,8 @@ do 12 jjj=1,1
             !STATEeq(10)=xt0/1000.0
             write(6,*) 'x,vx,vy,vz'
             write(6,200)STATEeq(6),STATEeq(5),STATEeq(7),STATEeq(9)
-            write(6,*) 'trap beam detuning, kappa/2 and omegam='
-            write(6,200) detun1,kapp2,omegam
+            write(6,*) 'trap beam detuning, kappa and omegam='
+            write(6,200) detun1,2.*kapp2,omegam
 
             ! period of each oscillation at equilibrium
             OM=max(omegam,abs(detun1))
@@ -414,7 +414,7 @@ SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEe
 IMPLICIT NONE
 integer  ::ii,m,jj,NTOT,NPERIOD,NWELLS
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,xZPF,g0,glight,G,OMcooperativity,cooperativity
-double precision::waist,XL,Finesse,Press,TEMP,XNAV,XMEAN
+double precision::waist,XL,Finesse,Press,TEMP,XNAV,XMEAN,rsb
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
 
@@ -447,8 +447,8 @@ A=OMOPT*POLARIS/2./VOL/EPSI0
 write(6,*)'A/(2pi)='
 write(6,100) A/pi/2.
 KAPP2=pi*c/finesse/XL/2.d0
-write(6,*)'kappa/2='
-write(6,100) Kapp2
+write(6,*)'kappa='
+write(6,100) 2*Kapp2
 
 ! trap beam equilibrium
 E1=KAPP2*PIN/2./OMOPT/hbar
@@ -498,16 +498,11 @@ STATEeq(2)=-E1*KAPP2/C1
 ! |alpha1|^2
 ASQ1=E1*E1/C1
 
-XMEAN=ASQ1/(XM*omegam**2)
-
 write(6,*)'trap beam photon number in cavity='
-write(6,100) ASQ1,XM,omegam,XMEAN
+write(6,100) ASQ1
 
-C1=KAPP2**2+(DETUN1-G*XMEAN)**2
+C1=KAPP2**2+DETUN1**2
 ASQ1=E1*E1/C1
-
-write(6,*)'trap beam photon number in cavity=, XMEAN'
-write(6,100) ASQ1,XMEAN
 
 ! Set KE to a fraction of the optical trap depth.
 Energy=hbar*A*ASQ1
@@ -603,8 +598,9 @@ write(6,100) XNAV
 xZPF=sqrt(hbar/(2.*XM*omegam))
 g0=G*xZPF
 glight=g0*sqrt(ASQ1)
-write(6,*) 'optomechanical coupling rates g0, G, g, xZPF'
-write(6,100) g0,G,glight,xZPF
+rsb=omegam/(2*kapp2)
+write(6,*) 'optomechanical coupling rates g0, G, g,sideband resolution parameter'
+write(6,100) g0,G,glight,rsb
 cooperativity=g0*g0*ASQ1/(2.*kapp2*gammam*XNAV)
 write(6,*) '*****COOPERATIVITY*****'
 write(6,100) cooperativity
