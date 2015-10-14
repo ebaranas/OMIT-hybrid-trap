@@ -42,7 +42,7 @@ double precision::RTRAP,V0,trapfreq,omega,Om,omsec,energy
 
 ! omega=trap drive; omegam=mech freq.
 ! calculated input parameters
-double precision:: E1,E2,PHAS1,tem1,AOUTr,AOUTi,Ar,Ai
+double precision:: E1,E2,PHAS1,tem1,AOUTr,AOUTi,Ar,Ai,G,mechfreq
 double precision:: KAPP2,XM,A,OMEGAM,AMP,Vamp,XV
 double precision:: x0,Wk0,check,GAMMAM,OMTRAPsq,VOPT,W2
 double precision:: XT0,YT0,ZT0,XX,YY,ZZ,XP0,YP0,ZP0,Avcos,Scatter,RR,pointpcle
@@ -99,8 +99,8 @@ DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=20d-3+(jjj-1)*0.01
-    PIN2=0.0*Pin
+    Pin=.2d-3+(jjj-1)*0.01
+    PIN2=0.01*Pin
 
     !open loop over nwells
     do 11 iii=1,1
@@ -108,7 +108,7 @@ do 12 jjj=1,1
 
         ! open loop over detuning
         do 10 ii=1,1
-            DETUN2=50.d3+(ii-1)*.1d3
+            DETUN2=49.5d3+(ii-1)*.1d3
             DETUN2=DETUN2*pi2
             
             ! Zero FT functions
@@ -137,7 +137,7 @@ do 12 jjj=1,1
             ! assume we start NWELLS  out from ion trap centre and accelerate back
             ! NWELLS=9
             ! NWELLS=-320
-            CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0, OMEGAM,omega,AMP,Vamp,Pin,Pin2)
+            CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
             
             !INITIALISE POSITIONS AND MOMENTA
             write(6,*)' Energy in secular motion'
@@ -405,7 +405,7 @@ end
 
 !********************************************************************
 !********************************************************************
-SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0, OMEGAM,omega,AMP,Vamp,Pin,Pin2)
+SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
 ! subroutine below is provided by user and specifies initial state
 ! and calculates  relevant parameters 
 !********************************************************************
@@ -413,8 +413,8 @@ SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEe
                 
 IMPLICIT NONE
 integer  ::ii,m,jj,NTOT,NPERIOD,NWELLS
-double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,xZPF,g0,glight,G,OMcooperativity,cooperativity
-double precision::waist,XL,Finesse,Press,TEMP,XNAV,XMEAN,rsb
+double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,xZPF,g0,glight,OMcooperativity,cooperativity
+double precision::waist,XL,Finesse,Press,TEMP,XNAV,XMEAN,rsb,G,mechfreq,omegam
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
 
@@ -424,12 +424,12 @@ double precision:: DETUN1,DETUN2,E1,E2,PHAS1,W2,W2M,welln
 double precision:: KAPP,ENERGY,A,XM,KAPP2
 double precision::pi,pi2
 double precision::Polaris,VOL,OMOPT,OMTRAPsq,QMICRO,AMP,Vamp,Astab
-double precision:: X0,WK0,OMEGAM,Gammam,omsec,omsecf,omegay,Beta
+double precision:: X0,WK0,Gammam,omsec,omsecf,omegay,Beta
 double precision::C1,C2,C3,C4,COOL1,ASQ1,ASQ2,XWELL,XEQ,WKXEQ     
 DOUBLE precision, DIMENSION(NTOT):: STATEeq
-PI=dacos(-1.d0)
-G=5d10
-omegam=2*pi*50000.d0
+pi=dacos(-1.d0)
+pi2=2*pi
+omegam=mechfreq*pi2
 ! zero eq. initial values
 STATEeq=0.d0
 XM=RHO*4.*pi/3.*R0**3
@@ -623,7 +623,7 @@ SUBROUTINE RK(nstep,STATE,STATEout,TDEL,TIME,DETUN1,DETUN2,XM,OMTRAPsq,W2,GAMMAM
 !********************************************************************
 IMPLICIT NONE 
 integer  ::ll,kk,it,jj,nstep,NTOT,NPERIOD,idum
-double precision:: cnoise,XNAV
+double precision:: cnoise,XNAV,G,mechfreq
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
@@ -761,7 +761,7 @@ SUBROUTINE FUNC(DT,STATE,XKR,TT,DEL,DETUN1,DETUN2,Coeff,OMTRAPsq,GAMMAM,kapp2,E1
 !********************************************************************
 IMPLICIT NONE
 integer  ::ll,kk,it,jj,Nstep,NTOT,NPERIOD
-double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,G,omegam
+double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,G,mechfreq,omegam
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
@@ -783,6 +783,7 @@ DOUBLE precision, DIMENSION(NTOT):: XKR,DX
 
 pi=dacos(-1.d0)
 pi2=2.d0*pi
+omegam=mechfreq*pi2
 
 ! in case of explicit time driving: TIME=TT+DT*DEL
 ! take C1 out into parameter file
@@ -827,10 +828,6 @@ ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
 
 ! both fields have same detuning
 DS1=DETUN1
-G=5d10
-omegam=50000
-omegam=omegam*pi2
-XM=0.73655687D-16
 
 ! write(6,*)DETUN1,VOPT
 ! optical field, real and imaginary
@@ -838,7 +835,7 @@ XM=0.73655687D-16
 
 DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+G*XX*ALPI1
 DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-G*XX*ALPR1
-DX(3)=-omegam**2*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
+DX(3)=-mechfreq**2*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
 ! now multiply by *DT
@@ -1530,7 +1527,7 @@ SUBROUTINE NORM(NPTS,Total,SXXR,OMSTOR)
                 
 IMPLICIT NONE 
 integer  ::ii,jj,NTOT,NPERIOD,NPTS
-double precision::pi,pi2,DEL,XRE,XIM,OM,Total,F1,F2
+double precision::pi,pi2,DEL,XRE,XIM,OM,Total,F1,F2,G,mechfreq
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,DET,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
@@ -1577,7 +1574,7 @@ end
 !********************************************************************
 IMPLICIT NONE 
 integer  ::ll,kk,it,jj,nstep,NTOT,NPERIOD,idum
-double precision:: cnoise,XNAV
+double precision:: cnoise,XNAV,G,mechfreq
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ
 double precision::waist,XL,Finesse,Press,TEMP
 double precision::RHO,WK,PIN,PIN2,Q
