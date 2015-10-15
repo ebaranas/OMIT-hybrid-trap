@@ -69,7 +69,7 @@ pi2=2.d0*pi
 PHAS1=0.d0
 
 ! set the offset between traps 
-OFF=0d-5
+OFF=-1d-5
 
 ! stochastic realisations
 nstoch=1
@@ -104,10 +104,10 @@ do 12 jjj=1,1
 
     !open loop over nwells
     do 11 iii=1,1
-        nwells=0+(iii-1)*50
+        nwells=1+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=-5,5
+        do 10 ii=1,1
             DETUN2=50d3+(ii-1)*1d3
             DETUN2=DETUN2*pi2
             
@@ -137,8 +137,7 @@ do 12 jjj=1,1
             ! assume we start NWELLS  out from ion trap centre and accelerate back
             ! NWELLS=9
             ! NWELLS=-320
-            CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
-            omegam=mechfreq*pi2
+            CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2,omegam)
             
             !INITIALISE POSITIONS AND MOMENTA
             write(6,*)' Energy in secular motion'
@@ -161,6 +160,8 @@ do 12 jjj=1,1
             ! reset position in x:
             STATEeq(4)=xt0
             STATEeq(3)=xt0/1000.0
+            STATEeq(6)=xt0/1000.0
+            STATEeq(8)=xt0/1000.0
             !STATEeq(10)=xt0/1000.0
             write(6,*) 'x,vx,vy,vz'
             write(6,200)STATEeq(6),STATEeq(5),STATEeq(7),STATEeq(9)
@@ -406,7 +407,7 @@ end
 
 !********************************************************************
 !********************************************************************
-SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
+SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2,omegam)
 ! subroutine below is provided by user and specifies initial state
 ! and calculates  relevant parameters 
 !********************************************************************
@@ -430,7 +431,6 @@ double precision::C1,C2,C3,C4,COOL1,ASQ1,ASQ2,XWELL,XEQ,WKXEQ
 DOUBLE precision, DIMENSION(NTOT):: STATEeq
 pi=dacos(-1.d0)
 pi2=2*pi
-omegam=mechfreq*pi2
 ! zero eq. initial values
 STATEeq=0.d0
 XM=RHO*4.*pi/3.*R0**3
@@ -544,9 +544,9 @@ write(6,*)'transverse optical frequency:'
 write(6,*) omegay
 
 ! equilibrium oscillation frequency
-!OMEGAM=2.*WK**2*A*hbar/XM
-!OMEGAM=OMEGAM*ASQ1*cos(2.*WK0)
-!OMEGAM=sqrt(OMEGAM)
+OMEGAM=2.*WK**2*A*hbar/XM
+OMEGAM=OMEGAM*ASQ1*cos(2.*WK0)
+OMEGAM=sqrt(OMEGAM)
 write(6,*)'Mechanical frequency f in Hz'
 write(6,100) omegam/2/pi
 write(6,*)'Mechanical frequency omega M,detuning, kappa2'
@@ -649,8 +649,8 @@ DOUBLE precision, DIMENSION(NTOT):: STATE0,XKR
 ! coupling coefficient that gives frequency of mech osc
 coeff=A*hbar*WK/XM
       
-!GRAVITY=9.8d0
-GRAVITY=0.d0
+GRAVITY=9.8d0
+!GRAVITY=0.d0
 OFFSET=OFF
 W2M=2.d0/W2
 
@@ -736,8 +736,8 @@ do 10 it=1,nstep
     ! write(6,*)etare,etaim,SNR
     ! add noise to trap optical field
     ! add noise to x and px
-    STATEout(1)=STATEout(1)+etaim*SNR
-    STATEout(3)=STATEout(3)+etare*xnoise
+    !STATEout(1)=STATEout(1)+etaim*SNR
+    !STATEout(3)=STATEout(3)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
@@ -763,7 +763,7 @@ SUBROUTINE FUNC(DT,STATE,XKR,TT,DEL,DETUN1,DETUN2,Coeff,OMTRAPsq,GAMMAM,kapp2,E1
 IMPLICIT NONE
 integer  ::ll,kk,it,jj,Nstep,NTOT,NPERIOD
 double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,G,mechfreq,omegam
-double precision::waist,XL,Finesse,Press,TEMP
+double precision::waist,XL,Finesse,Press,TEMP,phas1
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
 
@@ -784,8 +784,6 @@ DOUBLE precision, DIMENSION(NTOT):: XKR,DX
 
 pi=dacos(-1.d0)
 pi2=2.d0*pi
-omegam=mechfreq*pi2
-XM=0.73655687D-16
 
 ! in case of explicit time driving: TIME=TT+DT*DEL
 ! take C1 out into parameter file
@@ -800,51 +798,62 @@ XM=0.73655687D-16
 ! write(6,100)W2,A,PHAS1,DETUN1,VOPT
 ! put in offset between ion trap and optical beam
 
-TIME=TT+DT*DEL
-
+        TIME=TT+DT*DEL
 ! IN THIS VERSION try sin drive to catch fast
-VION=2d3*OMTRAPsq*sin(omega*time)
-!VION=sin(omega*time)
+        VION=OMTRAPsq*sin(omega*time)
+!        VION=OMTRAPsq*cos(omega*time)
+        Dprobe=DETUN2*time
 
-Dprobe=DETUN2*time
+        ALPR1=STATE(1)
+        ALPI1=STATE(2)
 
-ALPR1=STATE(1)
-ALPI1=STATE(2)
-Velox=STATE(3)
-XX=STATE(4)
-!WKX=WK*XX
-!COSWK=COS(WKX)
-!cosWK2=COSWK*COSWK
+        Velox=STATE(3)
+        XX=STATE(4)
+        WKX=WK*XX
+        COSWK=COS(WKX)
+        cosWK2=COSWK*COSWK
+        Veloy=STATE(5)
+        YY=STATE(6)
+        Veloz=STATE(7)
+        ZZ=STATE(8)
+
         
-!Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
-ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
-!AWIDE=WIDE*ASQ1
-
+        Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)  
+        ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
+        AWIDE=WIDE*ASQ1
 ! optical shift in detuning.In 3D depends on y,z
-! VOPT=A*COS(WKX-PHAS1)**2*WIDE
-!VOPT=A*coswk2*WIDE
-
-! Vfield=Coeff*sin(2.*WKX)*AWIDE
+!        VOPT=A*COS(WKX-PHAS1)**2*WIDE
+        VOPT=A*coswk2*WIDE
+!        Vfield=Coeff*sin(2.*WKX)*AWIDE
 ! add optical fields without PHAS1 in this model
-!Vfield=Coeff*sin(2.*WKX)*AWIDE
-!VYZ=-2*coeff/WK*coswk2*AWIDE*W2M
-
+        Vfield=Coeff*sin(2.*WKX)*AWIDE
+        VYZ=-2*coeff/WK*coswk2*AWIDE*W2M
 ! both fields have same detuning
-DS1=DETUN1
+        write(6,*) '*********WHUTTTTT'
+        !write(6,100) state(6)
+        DS1=DETUN1+VOPT
 
-! write(6,*)DETUN1,VOPT
+!        write(6,*)DETUN1,VOPT
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+G*XX*ALPI1
-DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-G*XX*ALPR1
-DX(3)=(-omegam**2+VION)*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
-DX(4)=Velox
+        DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1
+        DX(2)=DS1*ALPR1-KAPP2*ALPI1
 
+! x,y,z coords
+        DX(3)=-Vfield-GammaM*Velox-VION*XX
+        DX(4)=Velox
+! with gravity and offset
+        DX(5)=-GammaM*Veloy-VION*(YY+OFFSET)+VYZ*YY-GRAVITY
+        DX(6)=Veloy
+! modify for Peter trap coeff=1.7 not 2
+        DX(7)=-GammaM*Veloz+ 1.7*VION*ZZ+VYZ*ZZ
+!        DX(9)=-GammaM*Veloz+ VION*ZZ+VYZ*ZZ
+        DX(8)=Veloz
 ! now multiply by *DT
-do 30 ll=1,NTOT
-    XKR(ll)=DX(ll)*DT
-30 ENDDO
+        do 30 ll=1,NTOT
+        XKR(ll)=DX(ll)*DT
+30      ENDDO
 
 100 format(5E14.6)
 
@@ -1600,8 +1609,8 @@ DOUBLE precision, DIMENSION(NTOT):: STATE0,XKR
 ! coupling coefficient that gives frequency of mech osc
 coeff=A*hbar*WK/XM
 
-!GRAV=9.8d0
-GRAV=0.d0
+GRAV=9.8d0
+!GRAV=0.d0
 OFFSET=OFF
 W2M=2.d0/W2
 
