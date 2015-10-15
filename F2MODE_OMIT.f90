@@ -99,16 +99,16 @@ DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=.2d-3+(jjj-1)*0.01
-    PIN2=0.01*Pin
+    Pin=2d-3+(jjj-1)*0.01
+    PIN2=0.0*Pin
 
     !open loop over nwells
     do 11 iii=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=1,1
-            DETUN2=49.5d3+(ii-1)*.1d3
+        do 10 ii=-5,5
+            DETUN2=50d3+(ii-1)*1d3
             DETUN2=DETUN2*pi2
             
             ! Zero FT functions
@@ -138,6 +138,7 @@ do 12 jjj=1,1
             ! NWELLS=9
             ! NWELLS=-320
             CALL EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEeq,WK0,omega,AMP,Vamp,Pin,Pin2)
+            omegam=mechfreq*pi2
             
             !INITIALISE POSITIONS AND MOMENTA
             write(6,*)' Energy in secular motion'
@@ -784,6 +785,7 @@ DOUBLE precision, DIMENSION(NTOT):: XKR,DX
 pi=dacos(-1.d0)
 pi2=2.d0*pi
 omegam=mechfreq*pi2
+XM=0.73655687D-16
 
 ! in case of explicit time driving: TIME=TT+DT*DEL
 ! take C1 out into parameter file
@@ -801,7 +803,8 @@ omegam=mechfreq*pi2
 TIME=TT+DT*DEL
 
 ! IN THIS VERSION try sin drive to catch fast
-!VION=OMTRAPsq*sin(omega*time)
+VION=2d3*OMTRAPsq*sin(omega*time)
+!VION=sin(omega*time)
 
 Dprobe=DETUN2*time
 
@@ -835,7 +838,7 @@ DS1=DETUN1
 
 DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+G*XX*ALPI1
 DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-G*XX*ALPR1
-DX(3)=-mechfreq**2*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
+DX(3)=(-omegam**2+VION)*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
 ! now multiply by *DT
