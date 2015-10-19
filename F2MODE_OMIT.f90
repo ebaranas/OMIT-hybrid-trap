@@ -97,10 +97,10 @@ write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
 
 ! open loop over detuning
-do 10 ii=-7,9
+do 10 ii=-20,20
 
-    DETUN2=50.d3+(ii-1)*5d3
-    ! DETUN2=abs(DET)
+    detun2=50.d3+(ii-1)*0.05d3
+    !detun2=abs(DET)
     DETUN2=DETUN2*pi2
 
     ! Zero FT functions
@@ -149,9 +149,9 @@ do 10 ii=-7,9
     enddo
 
     !  reset position in x:
-    STATEeq(4)=xt0
+    STATEeq(6)=xt0
     write(6,*) 'x,vx,vy,vz'
-    write(6,200)STATEeq(4),STATEeq(3),STATEeq(5),STATEeq(7)
+    write(6,200)STATEeq(6),STATEeq(5),STATEeq(7),STATEeq(9)
     write(6,*)'trap beam detuning, kappa/2 and omegam='
     write(6,200) detun1,kapp2,omegam
 
@@ -186,23 +186,23 @@ do 10 ii=-7,9
 
     ! now you have a cold particle- now run with appropriate noise
     ! reset the position so as to add one quarter of the well half width
-    ! State(4)=State(4)-5.32d-7/6
+    ! State(6)=State(6)-5.32d-7/6
 
     Tin=0.d0
     Do 30 it=1,Nperiod
         ! store bead coordinates as a function of time
-        PX(it)=STATE(3)
-        XT(it)=STATE(4)
-        YT(it)=STATE(6)
-        ZT(it)=STATE(8)
+        PX(it)=STATE(5)
+        XT(it)=STATE(6)
+        YT(it)=STATE(8)
+        ZT(it)=STATE(10)
 
         ! if bead jumps out, put it back at well=NWELLS!!
-        test=STATE(4)*WK/pi-NWELLS
+        test=STATE(6)*WK/pi-NWELLS
         if(abs(test).gt.0.4d0)then 
             XT0=NWELLS/WK*pi
-            write(6,*)'jumped out, well=',STATE(4)*WK/pi,XT0
-            STATE(4)=XT0
-            STATE(3)=0.d0
+            write(6,*)'jumped out, well=',STATE(6)*WK/pi,XT0
+            STATE(6)=XT0
+            STATE(5)=0.d0
         endif
 
         ! OUTPUT   
@@ -213,14 +213,14 @@ do 10 ii=-7,9
         ! Fill parameters for the FT:trap
         SR3(it)=ASQ
         SI3(it)=0.d0
+        SR2(it)=XP0
+        SI2(it)=0.
         SR1(it)=AOUTr
         SI1(it)=0.d0
         TIME(it)=TIN
         XP0=XT(it)
         YP0=YT(it)
         ZP0=ZT(it)
-        SR2(it)=XP0
-        SI2(it)=0.
                     
         ! work out the scattering rate of light averaged over the nanosphere
         RR=R0
@@ -395,7 +395,7 @@ double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
 
 include 'PROBE2_OMIT.h'
-double precision:: DETUN1,DETUN2,E1,E2,PHAS1,W2,W2M,welln,NWELLS
+double precision:: DETUN1,DETUN2,E1,E2,PHAS1,W2,W2M,welln
 double precision:: KAPP,ENERGY,A,XM,KAPP2
 double precision::pi,pi2
 double precision::Polaris,VOL,OMOPT,OMTRAPsq,QMICRO,AMP,Vamp,Astab
@@ -679,7 +679,7 @@ do 10 it=1,nstep
     ! add noise to trap optical field
     ! add noise to x and px
     !STATEout(1)=STATEout(1)+etaim*SNR
-    !STATEout(3)=STATEout(3)+etare*xnoise
+    !STATEout(5)=STATEout(5)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
@@ -737,26 +737,27 @@ DOUBLE PRECISION, DIMENSION(NTOT):: XKR,DX
 TIME=TT+DT*DEL
 
 ! IN THIS VERSION try sin drive to catch fast
-!VION=OMTRAPsq*cos(omega*time)
 VION=OMTRAPsq*sin(omega*time)
+!VION=OMTRAPsq*cos(omega*time)
 
 Dprobe=DETUN2*time
-
 ALPR1=STATE(1)
 ALPI1=STATE(2)
-Velox=STATE(3)
-XX=STATE(4)
+ALPR2=STATE(3)
+ALPI2=STATE(4)
+Velox=STATE(5)
+XX=STATE(6)
 WKX=WK*XX
 COSWK=COS(WKX)
 cosWK2=COSWK*COSWK
-Veloy=STATE(5)
-YY=STATE(6)
-Veloz=STATE(7)
-ZZ=STATE(8)
+Veloy=STATE(7)
+YY=STATE(8)
+Veloz=STATE(9)
+ZZ=STATE(10)
 
 !Wide=exp(-(YY*YY+ZZ*ZZ)*W2M)
 wide=1.d0  
-ASQ1=ALPR1*ALPR1+ALPI1*ALPI1
+ASQ1=(ALPR1+ALPR2)**2+(ALPI1+ALPI2)**2
 AWIDE=WIDE*ASQ1
 
 ! optical shift in detuning.In 3D depends on y,z
@@ -775,20 +776,22 @@ DS1=DETUN1+VOPT
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)
-DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1
+DX(3)=-DS1*ALPI2-KAPP2*ALPR2-E2*cos(Dprobe)
+DX(4)=DS1*ALPR2-KAPP2*ALPI2+E2*sin(Dprobe)
 
 ! x,y,z coords
-DX(3)=-Vfield-GammaM*Velox-VION*XX
-DX(4)=Velox
+DX(5)=-Vfield-GammaM*Velox-VION*XX
+DX(6)=Velox
 
 ! with gravity and offset
-DX(5)=-GammaM*Veloy - VION*(YY+OFFSET)+VYZ*YY-GRAVITY
-DX(6)=Veloy
+DX(7)=-GammaM*Veloy - VION*(YY+OFFSET)+VYZ*YY-GRAVITY
+DX(8)=Veloy
 
 ! modify for Peter trap coeff=1.7 not 2
-DX(7)=-GammaM*Veloz+ 1.7*VION*ZZ+VYZ*ZZ
-DX(8)=Veloz
+DX(9)=-GammaM*Veloz+ 1.7*VION*ZZ+VYZ*ZZ
+DX(10)=Veloz
 
 ! now multiply by *DT
 do 30 ll=1,NTOT
