@@ -97,9 +97,9 @@ write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
 
 ! open loop over detuning
-do 10 ii=1,1
+do 10 ii=-7,9
 
-    DETUN2=50.d3+(ii-1)*0.1d3
+    DETUN2=50.d3+(ii-1)*5d3
     ! DETUN2=abs(DET)
     DETUN2=DETUN2*pi2
 
@@ -131,7 +131,7 @@ do 10 ii=1,1
 
     ! try to guess initial energy of particle
     ! assume we start NWELLS  out from ion trap centre and accelerate back
-    NWELLS=350
+    NWELLS=100
     XT0=NWELLS/WK*pi
     Qx=2*OMTRAPsq/omega/omega
     omsec=OMTRAPsq/sqrt(2.d0)/omega
@@ -213,14 +213,14 @@ do 10 ii=1,1
         ! Fill parameters for the FT:trap
         SR3(it)=ASQ
         SI3(it)=0.d0
-        SR2(it)=XP0
-        SI2(it)=0.
         SR1(it)=AOUTr
         SI1(it)=0.d0
         TIME(it)=TIN
         XP0=XT(it)
         YP0=YT(it)
         ZP0=ZT(it)
+        SR2(it)=XP0
+        SI2(it)=0.
                     
         ! work out the scattering rate of light averaged over the nanosphere
         RR=R0
@@ -395,7 +395,7 @@ double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
 
 include 'PROBE2_OMIT.h'
-double precision:: DETUN1,DETUN2,E1,E2,PHAS1,W2,W2M,welln
+double precision:: DETUN1,DETUN2,E1,E2,PHAS1,W2,W2M,welln,NWELLS
 double precision:: KAPP,ENERGY,A,XM,KAPP2
 double precision::pi,pi2
 double precision::Polaris,VOL,OMOPT,OMTRAPsq,QMICRO,AMP,Vamp,Astab
@@ -527,7 +527,7 @@ C1=4*ASQ1*Kapp2*WK**2*A**2*hbar/omegaM/xm
 ! X_well= position of well at which particle localises
 ! here assume it is well number welln; then rescale
 ! eg well 1000 gives (1000/welln)^2 times the cooling.
-welln=350
+welln=100
 WKXEQ=OMTRAPsq/OMEGAM**2*pi*welln
 write(6,*)'Trap freq^2 omsq; omsq/omegam^2'
 write(6,100)OMTRAPsq,OMTRAPsq/OMEGAM**2
@@ -678,8 +678,8 @@ do 10 it=1,nstep
     ! write(6,*)etare,etaim,SNR
     ! add noise to trap optical field
     ! add noise to x and px
-    STATEout(1)=STATEout(1)+etaim*SNR
-    STATEout(3)=STATEout(3)+etare*xnoise
+    !STATEout(1)=STATEout(1)+etaim*SNR
+    !STATEout(3)=STATEout(3)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
