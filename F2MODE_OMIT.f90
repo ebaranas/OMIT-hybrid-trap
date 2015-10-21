@@ -107,8 +107,8 @@ do 12 jjj=1,1
         nwells=0+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=1,1
-            DETUN2=50d3+(ii-1)*.5d3
+        do 10 ii=-5,5
+            DETUN2=50d3+(ii-1)*1d3
             DETUN2=DETUN2*pi2
             
             ! Zero FT functions
@@ -736,8 +736,8 @@ do 10 it=1,nstep
     ! write(6,*)etare,etaim,SNR
     ! add noise to trap optical field
     ! add noise to x and px
-    !STATEout(1)=STATEout(1)+etaim*SNR
-    !STATEout(3)=STATEout(3)+etare*xnoise
+    STATEout(1)=STATEout(1)+etaim*SNR
+    STATEout(3)=STATEout(3)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
@@ -803,7 +803,7 @@ XM=0.73655687D-16
 TIME=TT+DT*DEL
 
 ! IN THIS VERSION try sin drive to catch fast
-VION=5d2*OMTRAPsq*sin(omega*time)
+VION=2d3*OMTRAPsq*sin(omega*time)
 !VION=sin(omega*time)
 
 Dprobe=DETUN2*time
@@ -836,9 +836,9 @@ DS1=DETUN1
 ! optical field, real and imaginary
 ! trap drive with iE1       
 
-DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)-G*XX*ALPI1
-DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)+G*XX*ALPR1
-DX(3)=(-omegam**2-VION)*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
+DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+G*XX*ALPI1
+DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-G*XX*ALPR1
+DX(3)=(-omegam**2+VION)*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
 ! now multiply by *DT
