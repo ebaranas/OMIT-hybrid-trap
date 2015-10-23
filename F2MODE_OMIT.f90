@@ -94,20 +94,21 @@ OPEN(18,file="SPECTRA_OMIT.dat",status="unknown")
 write(6,*)'Charge number, Voltage '
 write(6,100) Q/1.6*1d19,V0
 
-det=-50.d3
+det=50.d3
 DETUN1=det*pi2
 
 !open loop over Pin
 do 12 jjj=1,1
-    Pin=2d-3+(jjj-1)*0.01
-    PIN2=0.0*Pin
+    Pin=0.01d-3+(jjj-1)*0.01
+    PIN2=0.01*Pin
 
     !open loop over nwells
     do 11 iii=1,1
-        nwells=0+(iii-1)*50
+        nwells=1+(iii-1)*50
 
         ! open loop over detuning
-        do 10 ii=-5,5
+        !do 10 ii=-8,10
+        do 10 ii=-8,10
             DETUN2=50d3+(ii-1)*1d3
             DETUN2=DETUN2*pi2
             
@@ -414,7 +415,7 @@ SUBROUTINE EQUIL(NWELLS,E1,E2,A,DETUN1,DETUN2,GammaM,W2,XM,Kapp2,OMtrapsq,STATEe
                 
 IMPLICIT NONE
 integer  ::ii,m,jj,NTOT,NPERIOD,NWELLS
-double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,xZPF,g0,glight,OMcooperativity,cooperativity
+double precision::R0,EPSR,EPSI0,C,hbar,BOLTZ,xZPF,g0,glight,OMcooperativity,cooperativity,drop,bistable
 double precision::waist,XL,Finesse,Press,TEMP,XNAV,XMEAN,rsb,G,mechfreq,omegam
 double precision::RHO,WK,PIN,PIN2,Q
 double precision::RTRAP,V0,trapfreq,omega,DET
@@ -600,14 +601,18 @@ xZPF=sqrt(hbar/(2.*XM*omegam))
 g0=G*xZPF
 glight=g0*sqrt(ASQ1)
 rsb=omegam/(2*kapp2)
-write(6,*) 'optomechanical coupling rates g0, G, g,sideband resolution parameter'
-write(6,100) g0,G,glight,rsb
+write(6,*) 'optomechanical coupling rates g0, G, sideband resolution parameter, g, kappa'
+write(6,100) g0,G,rsb,glight,2.*kapp2
 cooperativity=g0*g0*ASQ1/(2.*kapp2*gammam*XNAV)
 write(6,*) '*****COOPERATIVITY*****'
 write(6,100) cooperativity
 OMcooperativity=4.*g0*g0*ASQ1/(2.*kapp2*gammam)
 write(6,*) 'OPTOMECHANICAL COOPERATIVITY'
 write(6,100) OMcooperativity
+!drop=(OMcooperativity/(OMcooperativity+1))**2
+bistable=3./2.*sqrt(3.)*g0**2*ASQ1/(omegaM*2.*kapp2)
+write(6,*) 'critical power; should be 1'
+write(6,100) bistable
 
 
 100 format(4D16.8)
@@ -736,8 +741,8 @@ do 10 it=1,nstep
     ! write(6,*)etare,etaim,SNR
     ! add noise to trap optical field
     ! add noise to x and px
-    STATEout(1)=STATEout(1)+etaim*SNR
-    STATEout(3)=STATEout(3)+etare*xnoise
+    !STATEout(1)=STATEout(1)+etaim*SNR
+    !STATEout(3)=STATEout(3)+etare*xnoise
     ! call Gasdev(etare,etaim,sigma,idum)
     ! STATEout(3)=STATEout(3)+etare*SNR
 
@@ -786,6 +791,8 @@ pi=dacos(-1.d0)
 pi2=2.d0*pi
 omegam=mechfreq*pi2
 XM=0.73655687D-16
+GAMMAM=1600.*press/pi
+GAMMAM=GAMMAM/500/RHO/R0
 
 ! in case of explicit time driving: TIME=TT+DT*DEL
 ! take C1 out into parameter file
@@ -803,7 +810,7 @@ XM=0.73655687D-16
 TIME=TT+DT*DEL
 
 ! IN THIS VERSION try sin drive to catch fast
-VION=2d3*OMTRAPsq*sin(omega*time)
+VION=1d3*OMTRAPsq*sin(omega*time)
 !VION=sin(omega*time)
 
 Dprobe=DETUN2*time
@@ -838,7 +845,7 @@ DS1=DETUN1
 
 DX(1)=-DS1*ALPI1-KAPP2*ALPR1-E1-E2*cos(Dprobe)+G*XX*ALPI1
 DX(2)=DS1*ALPR1-KAPP2*ALPI1+E2*sin(Dprobe)-G*XX*ALPR1
-DX(3)=(-omegam**2+VION)*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
+DX(3)=-(omegam**2+0*VION)*XX-hbar/XM*G*ASQ1-GAMMAM*Velox
 DX(4)=Velox
 
 ! now multiply by *DT
